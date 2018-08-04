@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="1cde01d82e1a48b795294c6591acb292" Name="Diagram1">
+        <EntityTypeShape EntityType="EBillModel.Customer" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="EBillModel.Category" Width="1.5" PointX="3.375" PointY="1.125" />
+        <EntityTypeShape EntityType="EBillModel.Item" Width="1.5" PointX="5.625" PointY="0.875" />
+        <EntityTypeShape EntityType="EBillModel.Order" Width="1.5" PointX="7.875" PointY="1" />
+        <AssociationConnector Association="EBillModel.FK_Item_ToCategory" />
+        <EntityTypeShape EntityType="EBillModel.Type" Width="1.5" PointX="3.375" PointY="3.125" />
+        <EntityTypeShape EntityType="EBillModel.ItemType" Width="1.5" PointX="0.75" PointY="3" />
+        <AssociationConnector Association="EBillModel.FK_ItemType_ToItem" />
+        <AssociationConnector Association="EBillModel.FK_ItemType_ToType" />
+        <EntityTypeShape EntityType="EBillModel.OrderItem" Width="1.5" PointX="10.125" PointY="1.125" />
+        <AssociationConnector Association="EBillModel.FK_Order_ToCustomer" />
+        <AssociationConnector Association="EBillModel.FK_OrderItem_ToItem" />
+        <AssociationConnector Association="EBillModel.FK_OrderItem_ToOrder" />
+        </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>
