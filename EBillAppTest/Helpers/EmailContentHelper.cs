@@ -1,16 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using System.Globalization;
 
 namespace EBillAppTest.Helpers
 {
-    public class EmailContentHelper
+  public class EmailContentHelper
+  {
+    public static string GenerateContent(string table, string orderNumber, Decimal amount, string custName)
     {
-        public static string GenerateContent(string table, Guid orderId, decimal amount, string custName)
-        {
-            string contentTemplate = "Dear {0}, thank you for making an order# {1} of Total Amount {2} as below <br/>{3}";
-            return string.Format(contentTemplate, custName, orderId, amount, table);
-        }
+      return string.Format("Dear {0}, <br/>Thank you for making an order# {1} of Total Amount {2} as below: <br/><br/>{3}</body></html>",      
+        custName,
+        orderNumber,
+        string.Format(new CultureInfo("en-IN"), "{0:C}", amount),
+        table
+      );
     }
+  }
 }

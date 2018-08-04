@@ -17,6 +17,7 @@ namespace EBillAppTest.Data
         public System.Guid Id { get; set; }
         public System.Guid OrderId { get; set; }
         public int ItemId { get; set; }
+        public Nullable<int> Quantity { get; set; }
     
         public virtual Item Item { get; set; }
         public virtual Order Order { get; set; }

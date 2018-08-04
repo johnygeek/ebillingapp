@@ -17,6 +17,7 @@ namespace EBillAppTest.Data
         public System.Guid Id { get; set; }
         public System.Guid CustomerId { get; set; }
         public decimal Amount { get; set; }
+        public string OrderNumber { get; set; }
     
         public virtual Customer Customer { get; set; }
     }

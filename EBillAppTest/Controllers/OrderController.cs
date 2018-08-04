@@ -1,13 +1,15 @@
-﻿using System;
+﻿using EBillAppTest.Data;
+using EBillAppTest.Helpers;
+using EBillAppTest.Models;
+using System;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Description;
-using EBillAppTest.Data;
-using EBillAppTest.Helpers;
 
 namespace EBillAppTest.Controllers
 {
@@ -15,134 +17,107 @@ namespace EBillAppTest.Controllers
     {
         private EBillEntities db = new EBillEntities();
 
-        // GET: api/Order
         public IQueryable<Order> GetOrders()
         {
-            return db.Orders;
+            return (IQueryable<Order>)this.db.Orders;
         }
 
-        // GET: api/Order/5
         [ResponseType(typeof(Order))]
         public async Task<IHttpActionResult> GetOrder(Guid id)
         {
-            Order order = await db.Orders.FindAsync(id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(order);
+            OrderController orderController = this;
+            Order async = await orderController.db.Orders.FindAsync((object)id);
+            return async != null ? (IHttpActionResult)orderController.Ok<Order>(async) : (IHttpActionResult)orderController.NotFound();
         }
 
-        // PUT: api/Order/5
         [ResponseType(typeof(void))]
         public async Task<IHttpActionResult> PutOrder(Guid id, Order order)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            OrderController orderController = this;
+            if (!orderController.ModelState.IsValid)
+                return (IHttpActionResult)orderController.BadRequest(orderController.ModelState);
             if (id != order.Id)
-            {
-                return BadRequest();
-            }
-
-            db.Entry(order).State = EntityState.Modified;
-
+                return (IHttpActionResult)orderController.BadRequest();
+            orderController.db.Entry<Order>(order).State = EntityState.Modified;
             try
             {
-                await db.SaveChangesAsync();
+                int num = await orderController.db.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                if (!OrderExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                if (!orderController.OrderExists(id))
+                    return (IHttpActionResult)orderController.NotFound();
+                throw;
             }
-
-            return StatusCode(HttpStatusCode.NoContent);
+            return (IHttpActionResult)orderController.StatusCode(HttpStatusCode.NoContent);
         }
 
-        // POST: api/Order
         [ResponseType(typeof(Order))]
-        public async Task<IHttpActionResult> PostOrder(Models.OrderViewModel order)
+        public async Task<IHttpActionResult> PostOrder(OrderViewModel order)
         {
-            var dbOrder = new Order();
+            Order dbOrder = new Order();
             dbOrder.Id = Guid.NewGuid();
             dbOrder.CustomerId = order.OrderInfo.CustomerId;
-            decimal amount = 0;
-            foreach (var item in order.Items)
+            Decimal num1 = new Decimal();
+            foreach (EBillAppTest.Models.Item obj in order.Items)
             {
-                OrderItem oitem = new OrderItem();
-                oitem.Id = Guid.NewGuid();
-                oitem.OrderId = dbOrder.Id;
-                oitem.ItemId = item.Id;
-                db.OrderItems.Add(oitem);
+                EBillAppTest.Models.Item item = obj;
+                db.OrderItems.Add(new OrderItem()
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = dbOrder.Id,
+                    ItemId = item.Id,
+                    Quantity = new int?(item.Quantity)
+                });
                 var itemType = db.ItemTypes.SingleOrDefault(it => it.ItemId == item.Id && it.TypeId == (int)item.Type);
                 if (itemType != null)
-                    amount = amount + itemType.Amount;
+                    num1 += itemType.Amount * (Decimal)item.Quantity;
             }
-            dbOrder.Amount = amount;
+            dbOrder.Amount = num1;
+            dbOrder.OrderNumber = "OD" + string.Format("{0:d9}", (object)(DateTime.Now.Ticks / 10L % 1000000000L));
             db.Orders.Add(dbOrder);
             try
             {
-                await db.SaveChangesAsync();
+                int num2 = await db.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
                 if (OrderExists(dbOrder.Id))
-                {
                     return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
-            //Send Email
-                var dbCust = db.Customers.SingleOrDefault(cust => cust.Id == dbOrder.CustomerId);
-                string to = dbCust.Email;
-                string from = "noreply@cravetheshake.com";
-                string orderDetailsTable = TableBuilder.BuildTable(order);
-                string emailMsgContent = EmailContentHelper.GenerateContent(orderDetailsTable, dbOrder.Id, dbOrder.Amount, dbCust.FirstName + " " + dbCust.LastName);
-                await EmailHelper.SendEmailAsync(emailMsgContent, from, to);
-                return Ok(new { status = "success" });
+            var customer = db.Customers.SingleOrDefault(cust => cust.Id == dbOrder.CustomerId);
+            string email = customer.Email;
+            string from = "noreply@cravetheshake.com";
+            await EmailHelper.SendEmailAsync(EmailContentHelper.GenerateContent(TableBuilder.BuildTable(order), dbOrder.OrderNumber, dbOrder.Amount, customer.FirstName + " " + customer.LastName), from, email, dbOrder.OrderNumber);
+            return Ok(new
+            {
+                status = "success"
+            });
         }
 
-        // DELETE: api/Order/5
         [ResponseType(typeof(Order))]
         public async Task<IHttpActionResult> DeleteOrder(Guid id)
         {
-            Order order = await db.Orders.FindAsync(id);
+            OrderController orderController = this;
+            Order order = await orderController.db.Orders.FindAsync((object)id);
             if (order == null)
-            {
-                return NotFound();
-            }
-
-            db.Orders.Remove(order);
-            await db.SaveChangesAsync();
-
-            return Ok(order);
+                return (IHttpActionResult)orderController.NotFound();
+            orderController.db.Orders.Remove(order);
+            int num = await orderController.db.SaveChangesAsync();
+            return (IHttpActionResult)orderController.Ok<Order>(order);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
-            {
-                db.Dispose();
-            }
+                this.db.Dispose();
             base.Dispose(disposing);
         }
 
         private bool OrderExists(Guid id)
         {
-            return db.Orders.Count(e => e.Id == id) > 0;
+            return this.db.Orders.Count<Order>((Expression<Func<Order, bool>>)(e => e.Id == id)) > 0;
         }
     }
 }

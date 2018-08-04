@@ -21,16 +21,23 @@ namespace EBillAppTest.Controllers
         }
 
         // GET: api/Customer/5
-        [ResponseType(typeof(Customer))]
+        [ResponseType(typeof(Models.Customer))]
         public async Task<IHttpActionResult> GetCustomer(string key)
         {
-            Customer customer = await db.Customers.SingleOrDefaultAsync(cust => cust.Email == key || cust.Mobile == key);
+            Customer customer = await db.Customers.FirstOrDefaultAsync(c => c.Email == key || c.Mobile == key);
             if (customer == null)
             {
                 return Ok(new { custId = string.Empty });
             }
-
-            return Ok(customer);
+            var cust = new Models.Customer
+            {
+                Email = customer.Email,
+                FirstName = customer.FirstName,
+                Id = customer.Id,
+                LastName = customer.LastName,
+                Mobile = customer.Mobile
+            };
+            return Ok(cust);
         }
 
         // PUT: api/Customer/5
